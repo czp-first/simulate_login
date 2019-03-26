@@ -6,6 +6,7 @@ import rsa
 import binascii
 import re
 from urllib.parse import quote
+import urllib.request
 
 
 def m_login(username, password):
@@ -97,29 +98,29 @@ def pc_login(username, password):
 
     servertime, nonce, pubkey, rsakv = get_prelogin_info()
     post_data = encode_post_data(username, password, servertime, nonce, pubkey, rsakv)
-    login_url = "https://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.19)"
+    data = urllib.parse.urlencode(post_data).encode("utf-8")
+    login_url_one = "https://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.19)"
+
+    pattern_one = re.compile('location\.replace\("(.*?)"\)')
+    pattern_two = re.compile("location\.replace\('(.*?)'\)")
+    pattern_three = re.compile(r'"userdomain":"(.*?)"')
 
     login_headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "zh-CN,zh;q=0.9",
-        "Cache-Control": "max-age=0",
-        "Connection": "keep-alive",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Host": "login.sina.com.cn",
-        "Origin": "https://weibo.com",
-        "Referer": "https://weibo.com/",
-        "User-Agent": UserAgent().random
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36"
     }
 
     session = requests.session()
-    # session.headers = login_headers
-    session.post(url=login_url, data=post_data)
-    with open("index.html", "w") as f:
-        res = session.get("https://weibo.com/u/3191997705/home", headers=login_headers)
-        f.write(res.text)
-    session.close()
+    session.headers.update(login_headers)
+    session.get("http://weibo.com/login.php")
+    response_one = session.post(url=login_url_one, data=post_data, headers=login_headers)
+    login_url_two = pattern_one.search(response_one.text).group(1)
+    response_two = session.get(url=login_url_two)
+    login_url_three = pattern_two.search(response_two.text).group(1)
+    response_three = session.get(url=login_url_three, headers=login_headers)
+    login_url = "http://weibo.com/" + pattern_three.search(response_three.text).group(1)
+    response = session.get(login_url, headers=login_headers)
 
+    return session.cookies.get_dict()
 
 if __name__ == '__main__':
     username = input("please input sina weibo username: ")
