@@ -49,13 +49,11 @@ def pc_login(username, password):
         nonce = data["nonce"]
         pubkey = data["pubkey"]
         rsakv = data["rsakv"]
-        print(servertime, nonce, pubkey, rsakv)
         return servertime, nonce, pubkey, rsakv
 
     # 使用base64对username进行编码
     def encode_username(username):
         username_ = quote(username)
-        print(base64.encodestring(username_.encode("utf-8"))[:-1])
         return base64.encodestring(username_.encode("utf-8"))[:-1]
 
     # 使用rsa2对password进行编码
@@ -64,7 +62,6 @@ def pc_login(username, password):
         RSAKey = rsa.PublicKey(rsa_pubkey, 65537)
         code_str = str(servertime) + "\t" + str(nonce) + "\n" + str(password)
         pwd = rsa.encrypt(code_str.encode("utf-8"), RSAKey)
-        print(binascii.b2a_hex(pwd))
         return binascii.b2a_hex(pwd)
 
     # 构造请求参数
@@ -114,13 +111,16 @@ def pc_login(username, password):
     session.get("http://weibo.com/login.php")
     response_one = session.post(url=login_url_one, data=post_data, headers=login_headers)
     login_url_two = pattern_one.search(response_one.text).group(1)
-    response_two = session.get(url=login_url_two)
+    response_two = session.get(url=login_url_two, headers=login_headers)
     login_url_three = pattern_two.search(response_two.text).group(1)
     response_three = session.get(url=login_url_three, headers=login_headers)
     login_url = "http://weibo.com/" + pattern_three.search(response_three.text).group(1)
     response = session.get(login_url, headers=login_headers)
-
+    print(response.text.encode("GBK", errors="ignore").decode("utf-8", errors="ignore"))
+    # with open("cookies.txt", "w") as f:
+    #     f.write(json.dumps(session.cookies.get_dict()))
     return session.cookies.get_dict()
+
 
 if __name__ == '__main__':
     username = input("please input sina weibo username: ")

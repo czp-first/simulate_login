@@ -66,12 +66,8 @@ class LaGou(object):
         self.password = "veenike" + hashlib.md5(self.password.encode("utf-8")).hexdigest() + "veenike"
         self.password = hashlib.md5(self.password.encode("utf-8")).hexdigest()
 
-    def get_vcode(self):
-        url = f"https://passport.lagou.com/vcode/create?from=register&refresh={str(int(time.time()))}"
-        response = self.session.get(url)
-        vcode = Image.open(BytesIO(response.content))
-        vcode.show()
-        self.geetest = input("请输入验证码: ").center(20, ">")
+    def geetest(self):
+        pass
 
     def login(self):
         data = {
@@ -94,9 +90,7 @@ class LaGou(object):
         data = json.loads(response.content.decode("utf-8"))
         if data.get("state") == 1:
             print("yes")
-        elif data.get("state") == 21010:
-            # self.get_vcode()
-            # self.login()
+        elif data.get("state") == 21010:  # 滑块验证
             pass
 
     def main(self):
